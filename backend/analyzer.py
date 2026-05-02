@@ -20,6 +20,10 @@ logger = logging.getLogger("ColorAnalyzer")
 load_dotenv()
 
 
+class AnalysisProviderError(Exception):
+    pass
+
+
 class ColorAnalyzer:
     def __init__(self):
         self.google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -130,23 +134,33 @@ class ColorAnalyzer:
         """
 
     async def analyze_face(self, image_data: bytes):
+        errors = []
+
         if self.openrouter_client:
             try:
                 return self._analyze_with_openrouter(image_data)
             except Exception as e:
-                logger.error(f"Falha no OpenRouter: {e}")
-                print(f"[API] Falha no OpenRouter: {e}")
+                message = f"OpenRouter ({self.openrouter_model}): {e}"
+                errors.append(message)
+                logger.error(f"Falha no {message}")
+                print(f"[API] Falha no {message}")
+        else:
+            errors.append("OpenRouter: OPENROUTER_API_KEY nao configurada.")
 
         if self.google_client:
             try:
                 return self._analyze_with_gemini(image_data)
             except Exception as e:
-                logger.warning(f"Falha no Google Gemini: {e}")
-                print(f"[API] Falha no Google Gemini: {e}")
+                message = f"Google Gemini ({self.google_model_name}): {e}"
+                errors.append(message)
+                logger.warning(f"Falha no {message}")
+                print(f"[API] Falha no {message}")
+        else:
+            errors.append("Google Gemini: GOOGLE_API_KEY nao configurada ou SDK google-genai indisponivel.")
 
-        logger.warning("Nenhuma API disponivel ou funcional. Retornando dados de demonstracao.")
-        print("[API] AVISO: Nenhuma API disponivel ou funcional. Retornando MOCK DATA.")
-        return self._get_mock_data()
+        error_message = "Falha ao processar analise em todos os provedores: " + " | ".join(errors)
+        logger.error(error_message)
+        raise AnalysisProviderError(error_message)
 
     def _analyze_with_openrouter(self, image_data: bytes):
         logger.info(f"Tentando analise via OpenRouter ({self.openrouter_model})...")
@@ -210,47 +224,3 @@ class ColorAnalyzer:
         if text.startswith("```"):
             return text.split("```", 1)[1].split("```", 1)[0].strip()
         return text
-
-    def _get_mock_data(self):
-        return {
-            "detected_colors": {
-                "skin": "#f3cfb3",
-                "hair": "#4a3728",
-                "eyes": "#5b4e3e",
-                "lips": "#d68b8b",
-            },
-            "analysis": {
-                "season": "Outono Profundo",
-                "undertone": "Quente e profundo",
-                "contrast": "Medio-Alto",
-                "metals": "Ouro e cobre",
-                "explanation": "Subtom quente com cores ricas e terrosas. O alto contraste entre cabelo e pele sugere um perfil de Outono. Dados de teste.",
-            },
-            "recommendations": {
-                "spring": {
-                    "theory": "Cores vivas que iluminam o rosto",
-                    "day": ["#FFD700", "#FF8C00", "#FFA500", "#FF7F50", "#FF6347"],
-                    "night": ["#E9967A", "#FF4500", "#CD5C5C", "#8B0000", "#B22222"],
-                },
-                "summer": {
-                    "theory": "Tons pasteis e suaves",
-                    "day": ["#87CEEB", "#D8BFD8", "#B0C4DE", "#E0FFFF", "#F0FFFF"],
-                    "night": ["#4682B4", "#9370DB", "#7B68EE", "#6A5ACD", "#483D8B"],
-                },
-                "autumn": {
-                    "theory": "Harmonia total com tons terrosos",
-                    "day": ["#8B4513", "#DAA520", "#B8860B", "#CD853F", "#D2691E"],
-                    "night": ["#556B2F", "#A0522D", "#800000", "#5D4037", "#3E2723"],
-                },
-                "winter": {
-                    "theory": "Cores puras e intensas",
-                    "day": ["#F0F8FF", "#B0C4DE", "#87CEFA", "#00BFFF", "#1E90FF"],
-                    "night": ["#191970", "#4B0082", "#8B008B", "#000080", "#000000"],
-                },
-            },
-            "makeup_tips": {
-                "lipstick": "Terracota e nude quente, como #A0522D e #C68642.",
-                "blush": "Pessego profundo e cobre suave, como #D2691E e #CD853F.",
-                "eyeshadow": "Marrom cafe, bronze e oliva, como #654321, #DAA520 e #556B2F.",
-            },
-        }

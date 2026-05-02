@@ -2,6 +2,39 @@
 
 Todas as mudancas notaveis do projeto serao documentadas neste arquivo.
 
+## [1.3.0] - 2026-05-02
+
+### Adicionado
+
+- Configuracao `ALLOWED_ORIGINS` para restringir origens CORS permitidas.
+- Autenticacao por API key via header `X-API-Key` nos endpoints de analise.
+- Fila Redis/RQ para processar analises assíncronas fora do processo da API.
+- Worker dedicado em `backend/worker.py`.
+- Modulo `backend/jobs.py` para enfileiramento, processamento e entrega de webhooks.
+- Endpoint `GET /analysis/jobs/{job_id}` para consultar metadados do job.
+- Servicos `redis` e `worker` no `docker-compose.yml`.
+- Variaveis `REDIS_URL` e `ANALYSIS_QUEUE`.
+
+### Alterado
+
+- `POST /analyze/webhook` agora enfileira jobs em Redis/RQ em vez de usar `BackgroundTasks` do FastAPI.
+- Se a fila estiver indisponivel, a API retorna `503`.
+
+## [1.2.0] - 2026-05-02
+
+### Adicionado
+
+- Endpoint `POST /analyze/webhook` para analises assíncronas com notificacao por webhook.
+- Evento `analysis.completed` com resultado completo e evento `analysis.failed` com erro.
+- Header opcional `X-Fit-Kolors-Webhook-Secret` para consumidores validarem a origem do webhook.
+- Dependencia explicita `httpx` para entrega dos webhooks.
+
+### Alterado
+
+- Removido fallback com dados mockados quando todos os provedores de IA falham.
+- `/analyze` agora retorna `502` com o motivo quando todos os provedores falham.
+- Webhooks de analise agora notificam falhas reais via `analysis.failed` com mensagem em `error`.
+
 ## [1.1.1] - 2026-05-02
 
 ### Migrado
