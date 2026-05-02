@@ -28,3 +28,4 @@ Thumbs.db
 backend/logs/
 *.log
 backend/openrouter_test_results/
+backend/test.png
