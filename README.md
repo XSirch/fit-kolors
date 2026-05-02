@@ -19,7 +19,7 @@ O **Fit-Kolors** e uma plataforma de analise de colorimetria pessoal pelo Metodo
 - FastAPI
 - Pydantic
 - OpenAI SDK para OpenRouter
-- Google Generative AI SDK para fallback Gemini
+- Google Gen AI SDK (`google-genai`) para fallback Gemini
 - python-dotenv
 
 ### Frontend
@@ -119,6 +119,6 @@ Use o HTML para comparar visualmente as respostas dos modelos.
 
 ## Versionamento
 
-Versao atual: **1.1.0**
+Versao atual: **1.1.1**
 
 Este projeto segue versionamento semantico.

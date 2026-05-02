@@ -7,9 +7,11 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types as genai_types
 except ImportError:
     genai = None
+    genai_types = None
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,12 +25,11 @@ class ColorAnalyzer:
         self.google_api_key = os.getenv("GOOGLE_API_KEY")
         self.google_model_name = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
         if self.google_api_key and genai:
-            genai.configure(api_key=self.google_api_key)
-            self.google_model = genai.GenerativeModel(self.google_model_name)
+            self.google_client = genai.Client(api_key=self.google_api_key)
         else:
-            self.google_model = None
+            self.google_client = None
             if self.google_api_key and not genai:
-                logger.warning("google-generativeai nao esta instalado; fallback Gemini desativado.")
+                logger.warning("google-genai nao esta instalado; fallback Gemini desativado.")
 
         self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
         self.openrouter_model = os.getenv("OPENROUTER_MODEL", "x-ai/grok-4.1-fast")
@@ -136,7 +137,7 @@ class ColorAnalyzer:
                 logger.error(f"Falha no OpenRouter: {e}")
                 print(f"[API] Falha no OpenRouter: {e}")
 
-        if self.google_model:
+        if self.google_client:
             try:
                 return self._analyze_with_gemini(image_data)
             except Exception as e:
@@ -180,16 +181,20 @@ class ColorAnalyzer:
         logger.info(f"Iniciando fallback via Google Gemini ({self.google_model_name})...")
         print(f"[API] Iniciando fallback via Google Gemini ({self.google_model_name})...")
 
-        response = self.google_model.generate_content(
-            [
+        response = self.google_client.models.generate_content(
+            model=self.google_model_name,
+            contents=[
                 self.prompt,
-                {"mime_type": "image/jpeg", "data": image_data},
+                genai_types.Part.from_bytes(
+                    data=image_data,
+                    mime_type="image/jpeg",
+                ),
             ],
-            generation_config={
-                "temperature": 0,
-                "top_p": 0.1,
-                "response_mime_type": "application/json",
-            },
+            config=genai_types.GenerateContentConfig(
+                temperature=0,
+                top_p=0.1,
+                response_mime_type="application/json",
+            ),
         )
 
         text = self._strip_json_fence(response.text)

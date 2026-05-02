@@ -2,6 +2,12 @@
 
 Todas as mudancas notaveis do projeto serao documentadas neste arquivo.
 
+## [1.1.1] - 2026-05-02
+
+### Migrado
+
+- Fallback Gemini atualizado do pacote encerrado `google-generativeai` para o SDK atual `google-genai`.
+
 ## [1.1.0] - 2026-05-02
 
 ### Adicionado
