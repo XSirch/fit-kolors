@@ -8,7 +8,7 @@ import uvicorn
 app = FastAPI(
     title="Fit-Kolors API",
     description="API RESTful para análise de colorimetria pessoal utilizando IA.",
-    version="1.0.0"
+    version="1.1.0"
 )
 
 # Enable CORS for frontend

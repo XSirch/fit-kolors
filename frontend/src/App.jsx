@@ -41,6 +41,35 @@ function App() {
     }
   };
 
+  const extractHexColors = (text = '') => {
+    const matches = text.match(/#[0-9a-fA-F]{6}\b/g) || [];
+    return [...new Set(matches.map((color) => color.toUpperCase()))];
+  };
+
+  const MakeupTip = ({ label, text }) => {
+    const colors = extractHexColors(text);
+
+    return (
+      <div className="makeup-tip">
+        <p><strong>{label}:</strong> {text}</p>
+        {colors.length > 0 && (
+          <div className="makeup-swatches" aria-label={`Cores sugeridas para ${label}`}>
+            {colors.map((color) => (
+              <div key={color} className="makeup-swatch">
+                <div
+                  className="color-dot makeup-color-dot"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+                <span>{color}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const ColorSection = ({ title, colors, icon: Icon }) => (
     <div className="glass-card" style={{ marginTop: '1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
@@ -156,10 +185,10 @@ function App() {
                   <h4 style={{ marginBottom: '1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Sparkles size={16} /> Dicas de Beleza
                   </h4>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <p><strong>💄 Batom:</strong> {result.makeup_tips.lipstick}</p>
-                    <p><strong>😊 Blush:</strong> {result.makeup_tips.blush}</p>
-                    <p><strong>👁️ Sombras:</strong> {result.makeup_tips.eyeshadow}</p>
+                  <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <MakeupTip label="Batom" text={result.makeup_tips.lipstick} />
+                    <MakeupTip label="Blush" text={result.makeup_tips.blush} />
+                    <MakeupTip label="Sombras" text={result.makeup_tips.eyeshadow} />
                   </div>
                 </div>
               </div>

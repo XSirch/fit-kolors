@@ -1,101 +1,124 @@
-# 🎨 Fit-Kolors
+# Fit-Kolors
 
-O **Fit-Kolors** é uma plataforma avançada de análise de colorimetria pessoal (Método Sazonal Expandido) que utiliza Inteligência Artificial para identificar as paletas de cores que melhor harmonizam com o tom de pele, cabelo e olhos do usuário.
+O **Fit-Kolors** e uma plataforma de analise de colorimetria pessoal pelo Metodo Sazonal Expandido. O app envia uma foto para o backend, recebe um diagnostico estruturado por IA e exibe a estacao, cores detectadas, paletas sazonais, metais e dicas de maquiagem.
 
----
+## Funcionalidades
 
-## 🚀 Funcionalidades
+- **Analise facial por IA**: deteccao de cores de pele, cabelo, olhos e labios.
+- **Diagnostico sazonal**: classificacao em uma das 12 estacoes permitidas.
+- **Prompt deterministico**: prioriza pele, cabelo natural, olhos e contraste real; trata maquiagem, roupa, fundo e acessorios como evidencias fracas.
+- **Modelo principal via OpenRouter**: `x-ai/grok-4.1-fast` e usado como modelo principal.
+- **Fallback Gemini**: `gemini-2.5-flash` fica como redundancia quando o OpenRouter falha ou nao esta configurado.
+- **Dicas de maquiagem com swatches**: exemplos em HEX nas dicas de batom, blush e sombra sao renderizados visualmente no frontend.
+- **Teste comparativo de modelos**: script local para comparar varios modelos OpenRouter com a mesma imagem e gerar JSON + HTML.
 
-- **Análise Facial por IA**: Detecção automática de cores de pele, cabelo, olhos e lábios.
-- **Diagnóstico de Estação**: Classificação em uma das 12 estações sazonais (ex: Inverno Escuro, Outono Suave).
-- **Estudo Aprofundado**:
-    - Recomendações de metais (Ouro, Prata, etc.).
-    - Dicas de maquiagem (Batom, Blush, Sombras).
-    - Paletas personalizadas para Dia e Noite para todas as estações.
-- **API RESTful**: Backend robusto com documentação automática via Swagger.
-- **Sistema Híbrido de IA**: Suporte nativo a Google Gemini 2.0 Flash com fallback automático para OpenRouter.
-- **Interface Premium**: Design em *Glassmorphism* moderno, responsivo e interativo.
-
----
-
-## 🛠️ Tecnologias
+## Tecnologias
 
 ### Backend
-- **FastAPI**: Framework web de alta performance.
-- **Pydantic**: Validação de dados e estruturação de resposta.
-- **Google Generative AI SDK**: Integração com Gemini 2.0 Flash.
-- **OpenAI SDK**: Utilizado para o fallback via OpenRouter.
+
+- FastAPI
+- Pydantic
+- OpenAI SDK para OpenRouter
+- Google Generative AI SDK para fallback Gemini
+- python-dotenv
 
 ### Frontend
-- **React + Vite**: Framework moderno para UI.
-- **Lucide-React**: Conjunto de ícones minimalistas.
-- **Vanilla CSS**: Estilização premium personalizada.
 
----
+- React + Vite
+- Lucide React
+- CSS customizado
 
-## 📦 Estrutura do Projeto
+## Estrutura
 
 ```text
-color-face/
-├── backend/            # API FastAPI
-│   ├── analyzer.py     # Lógica central da IA e Prompts
-│   ├── main.py         # Endpoints e Servidor
-│   ├── .env            # Configurações sensíveis (API Keys)
+Fit-Kolors/
+├── backend/
+│   ├── analyzer.py                 # Integracao IA, prompt e fallback
+│   ├── main.py                     # API FastAPI
+│   ├── test_openrouter_models.py   # Comparativo local de modelos OpenRouter
+│   ├── .env.example
 │   └── requirements.txt
-├── frontend/           # App React
+├── frontend/
 │   ├── src/
-│   │   ├── App.jsx     # Componente principal e UI
-│   │   └── index.css   # Estilos globais (Glassmorphism)
+│   │   ├── App.jsx
+│   │   └── index.css
 │   └── package.json
+├── CHANGELOG.md
 └── README.md
 ```
 
----
+## Instalacao
 
-## 🔧 Instalação e Execução
+### Backend
 
-### 1. Requisitos
-- Python 3.9+
-- Node.js 18+
-- Chave de API do Google Gemini ou OpenRouter.
-
-### 2. Configuração do Backend
 ```bash
 cd backend
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
-Crie um arquivo `.env` na pasta `backend/`:
+
+Crie `backend/.env`:
+
 ```env
-GOOGLE_API_KEY=sua_chave_aqui
-GOOGLE_MODEL=gemini-2.0-flash
-OPENROUTER_API_KEY=sua_chave_aqui
-OPENROUTER_MODEL=google/gemini-2.0-flash-001
+GOOGLE_API_KEY=sua_chave_gemini
+GOOGLE_MODEL=gemini-2.5-flash
+OPENROUTER_API_KEY=sua_chave_openrouter
+OPENROUTER_MODEL=x-ai/grok-4.1-fast
+OPENROUTER_TEST_MODELS=x-ai/grok-4.1-fast,google/gemini-2.5-flash
 ```
-Inicie o servidor:
+
+Inicie a API:
+
 ```bash
 python main.py
 ```
-Acesse a documentação em: `http://localhost:8000/docs`
 
-### 3. Configuração do Frontend
+Swagger: `http://localhost:8000/docs`
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
----
+App: `http://localhost:5173`
 
-## 📡 Documentação da API
+## API
 
 ### `POST /analyze`
-Envia uma imagem para análise técnica.
-- **Body**: `multipart/form-data` contendo o campo `file` (imagem).
-- **Response**: JSON estruturado com `detected_colors`, `analysis`, `recommendations` e `makeup_tips`.
 
----
+Envia uma imagem para analise de colorimetria.
 
-## 📄 Licença
-Este projeto é para fins de demonstração de capacidades técnicas em IA e desenvolvimento Full-stack.
+- Body: `multipart/form-data` com campo `file`
+- Response: JSON com:
+  - `detected_colors`
+  - `analysis`
+  - `recommendations`
+  - `makeup_tips`
+
+## Teste comparativo de modelos
+
+O script abaixo testa varios modelos OpenRouter com a mesma imagem:
+
+```bash
+cd backend
+python test_openrouter_models.py test.png
+```
+
+Ele le `OPENROUTER_TEST_MODELS` do `.env`, executa as chamadas em paralelo e salva:
+
+```text
+backend/openrouter_test_results/result_YYYYMMDD_HHMMSS.json
+backend/openrouter_test_results/result_YYYYMMDD_HHMMSS.html
+```
+
+Use o HTML para comparar visualmente as respostas dos modelos.
+
+## Versionamento
+
+Versao atual: **1.1.0**
+
+Este projeto segue versionamento semantico.

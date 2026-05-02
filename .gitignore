@@ -27,3 +27,4 @@ Thumbs.db
 # Logs
 backend/logs/
 *.log
+backend/openrouter_test_results/
