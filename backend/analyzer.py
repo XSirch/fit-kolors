@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from config import API_VERSION
+
 try:
     from google import genai
     from google.genai import types as genai_types
@@ -45,7 +47,7 @@ class ColorAnalyzer:
         else:
             self.openrouter_client = None
 
-        self.prompt = """
+        self.prompt = f"""
         Atue como especialista senior em Colorimetria Pessoal pelo Metodo Sazonal Expandido.
         Analise a imagem com uma metodologia conservadora, consistente e baseada nas caracteristicas naturais.
 
@@ -108,27 +110,56 @@ class ColorAnalyzer:
         3. qual era a alternativa mais proxima e por que ela perdeu.
 
         Retorne um JSON rigoroso exatamente neste formato:
-        {
-          "detected_colors": { "skin": "#hex", "hair": "#hex", "eyes": "#hex", "lips": "#hex" },
-          "analysis": {
+        {{
+          "model_version": "{API_VERSION}",
+          "confidence": 0.87,
+          "photo_flags": [],
+          "detected_colors": {{ "skin": "#hex", "hair": "#hex", "eyes": "#hex", "lips": "#hex" }},
+          "analysis": {{
             "season": "Uma das 12 estacoes permitidas",
             "undertone": "Quente, Frio ou Neutro + breve justificativa",
             "contrast": "Baixo, Medio ou Alto + breve justificativa",
-            "metals": "Ouro, Prata, Ouro branco, Cobre, Bronze etc.",
+            "depth": "Clara, Media ou Profunda + breve justificativa",
+            "metals": ["ouro", "bronze"],
             "explanation": "Explicacao tecnica seguindo as 3 obrigacoes acima."
-          },
-          "recommendations": {
-            "spring": { "theory": "...", "day": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"], "night": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"] },
-            "summer": { "theory": "...", "day": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"], "night": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"] },
-            "autumn": { "theory": "...", "day": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"], "night": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"] },
-            "winter": { "theory": "...", "day": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"], "night": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"] }
-          },
-          "makeup_tips": {
+          }},
+          "recommendations": {{
+            "Primavera Brilhante": {{ "theory": "...", "day": ["#hex1", "#hex2", "#hex3"], "night": ["#hex1", "#hex2", "#hex3"] }},
+            "Verao Claro": {{ "theory": "...", "day": ["#hex1", "#hex2", "#hex3"], "night": ["#hex1", "#hex2", "#hex3"] }},
+            "Outono Suave": {{ "theory": "...", "day": ["#hex1", "#hex2", "#hex3"], "night": ["#hex1", "#hex2", "#hex3"] }},
+            "Inverno Profundo": {{ "theory": "...", "day": ["#hex1", "#hex2", "#hex3"], "night": ["#hex1", "#hex2", "#hex3"] }}
+          }},
+          "makeup_tips": {{
             "lipstick": "Texto com nomes de cores e 2 a 4 exemplos em HEX, ex: #A0522D",
             "blush": "Texto com nomes de cores e 2 a 4 exemplos em HEX, ex: #D2691E",
             "eyeshadow": "Texto com nomes de cores e 3 a 5 exemplos em HEX, ex: #654321"
-          }
-        }
+          }},
+          "makeup": {{
+            "lipstick": ["#hex1", "#hex2", "#hex3"],
+            "blush": ["#hex1", "#hex2"],
+            "eyeshadow": ["#hex1", "#hex2", "#hex3"],
+            "foundation_undertone": "quente/dourado, frio/rosado ou neutro"
+          }},
+          "hair": {{
+            "recommended_tones": ["#hex1", "#hex2", "#hex3"],
+            "highlights": ["#hex1", "#hex2"],
+            "notes": "Texto curto sobre tons indicados e tons a evitar."
+          }},
+          "colors_to_avoid": [
+            {{ "hex": "#hex1", "reason": "Motivo especifico ligado ao subtom, contraste ou profundidade" }},
+            {{ "hex": "#hex2", "reason": "Motivo especifico ligado ao subtom, contraste ou profundidade" }},
+            {{ "hex": "#hex3", "reason": "Motivo especifico ligado ao subtom, contraste ou profundidade" }}
+          ]
+        }}
+
+        REGRAS DE CONTRATO
+        - model_version deve ser exatamente "{API_VERSION}".
+        - confidence deve ser numero entre 0 e 1.
+        - photo_flags deve conter apenas estes valores quando aplicaveis: "low_light", "heavy_filter", "face_not_centered", "wearing_sunglasses", "heavy_makeup", "multiple_faces", "no_face_detected".
+        - detected_colors e todos os arrays de cores devem usar HEX com #.
+        - analysis.metals deve ser array de strings, nao texto unico.
+        - recommendations deve conter objetos com theory, day e night.
+        - makeup, hair e colors_to_avoid devem sempre estar presentes com dados coerentes.
 
         Retorne APENAS o JSON, sem markdown, sem comentarios fora do JSON e em portugues.
         """

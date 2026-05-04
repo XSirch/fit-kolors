@@ -7,6 +7,7 @@ from redis import Redis
 from rq import Queue
 
 from analyzer import ColorAnalyzer
+from response_normalizer import normalize_analysis_response
 
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -80,4 +81,4 @@ def process_analysis_job(
 def _run_analysis(analyzer: ColorAnalyzer, image_data: bytes):
     import asyncio
 
-    return asyncio.run(analyzer.analyze_face(image_data))
+    return normalize_analysis_response(asyncio.run(analyzer.analyze_face(image_data)))

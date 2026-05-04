@@ -10,6 +10,7 @@ O **Fit-Kolors** e uma plataforma de analise de colorimetria pessoal pelo Metodo
 - **Modelo principal via OpenRouter**: `x-ai/grok-4.1-fast` e usado como modelo principal.
 - **Fallback Gemini**: `gemini-2.5-flash` fica como redundancia quando o OpenRouter falha ou nao esta configurado.
 - **Dicas de maquiagem com swatches**: exemplos em HEX nas dicas de batom, blush e sombra sao renderizados visualmente no frontend.
+- **Contrato de resposta versionado**: `/analyze` retorna `model_version` com a versao da API e normaliza aliases aceitos pela aplicacao.
 - **Webhook para analises assíncronas**: clientes da API podem receber um evento quando a analise terminar, sem polling.
 - **Fila com workers**: analises assíncronas sao enfileiradas no Redis e processadas por workers RQ separados da API.
 - **Teste comparativo de modelos**: script local para comparar varios modelos OpenRouter com a mesma imagem e gerar JSON + HTML.
@@ -134,11 +135,69 @@ Envia uma imagem para analise de colorimetria.
 - Body: `multipart/form-data` com campo `file`
 - Header obrigatorio: `X-API-Key`
 - Response: JSON com:
+  - `model_version` igual a versao atual da API
+  - `confidence`
+  - `photo_flags`
   - `detected_colors`
   - `analysis`
   - `recommendations`
   - `makeup_tips`
+  - `makeup`
+  - `hair`
+  - `colors_to_avoid`
 - Em falha de todos os provedores de IA, retorna `502` com o motivo no campo `detail`. A API nao retorna dados mockados.
+
+Exemplo resumido de resposta:
+
+```json
+{
+  "model_version": "1.4.0",
+  "confidence": 0.87,
+  "photo_flags": [],
+  "detected_colors": {
+    "skin": "#F5D5C0",
+    "hair": "#4A2B0F",
+    "eyes": "#6B4226",
+    "lips": "#E87C8A"
+  },
+  "analysis": {
+    "season": "Verao Claro",
+    "undertone": "Frio",
+    "contrast": "Medio",
+    "depth": "Clara",
+    "metals": ["prata", "ouro branco"],
+    "explanation": "Pele clara com subtom rosado/azulado..."
+  },
+  "recommendations": {
+    "Verao Claro": {
+      "theory": "Tons frios e suaves.",
+      "day": ["#A8D8EA", "#AA96DA", "#FCBAD3"],
+      "night": ["#5B8DB8", "#7B5EA7", "#C06080"]
+    }
+  },
+  "makeup_tips": {
+    "lipstick": "Tons rosados frios",
+    "blush": "Rose",
+    "eyeshadow": "Cinza e lavanda"
+  },
+  "makeup": {
+    "lipstick": ["#E8A0B4"],
+    "blush": ["#F4C2C2"],
+    "eyeshadow": ["#9B8EA8"],
+    "foundation_undertone": "frio/rosado"
+  },
+  "hair": {
+    "recommended_tones": ["#8B5E3C"],
+    "highlights": ["#D4B896"],
+    "notes": "Preferir loiros acinzentados."
+  },
+  "colors_to_avoid": [
+    { "hex": "#FF8C00", "reason": "Tom alaranjado quente conflita com o subtom frio" }
+  ]
+}
+```
+
+A API normaliza aliases aceitos pela aplicacao, incluindo `modelVersion`, `analysis.profundidade`, `theory/teoria`, `day/dia`, `night/noite`, `lipstick/batom`, `eyeshadow/sombras`, `recommendedTones/tons`, `highlights/luzes`, `notes/observacoes`, e `hex/color/value` com `reason/motivo`.
 
 ### `POST /analyze/webhook`
 
@@ -169,10 +228,16 @@ Quando terminar, o backend envia `POST` para `webhook_url`:
   "created_at": "2026-05-02T12:00:00+00:00",
   "completed_at": "2026-05-02T12:00:30+00:00",
   "result": {
+    "model_version": "1.4.0",
+    "confidence": 0.87,
+    "photo_flags": [],
     "detected_colors": {},
     "analysis": {},
     "recommendations": {},
-    "makeup_tips": {}
+    "makeup_tips": {},
+    "makeup": {},
+    "hair": {},
+    "colors_to_avoid": []
   },
   "error": null
 }
@@ -218,6 +283,6 @@ Use o HTML para comparar visualmente as respostas dos modelos.
 
 ## Versionamento
 
-Versao atual: **1.3.0**
+Versao atual: **1.4.0**
 
 Este projeto segue versionamento semantico.

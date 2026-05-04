@@ -2,6 +2,20 @@
 
 Todas as mudancas notaveis do projeto serao documentadas neste arquivo.
 
+## [1.4.0] - 2026-05-04
+
+### Adicionado
+
+- Contrato completo de resposta em `/analyze` com `model_version`, `confidence`, `photo_flags`, `makeup`, `hair` e `colors_to_avoid`.
+- Normalizacao defensiva para aliases aceitos pela aplicacao, incluindo campos em camelCase e chaves em portugues.
+- Testes unitarios para normalizacao do payload de analise.
+
+### Alterado
+
+- `analysis.metals` agora e retornado como array de strings.
+- `model_version` passa a ser preenchido pela versao declarada da API quando ausente.
+- Webhooks passam a entregar o mesmo contrato normalizado dentro de `result`.
+
 ## [1.3.0] - 2026-05-02
 
 ### Adicionado

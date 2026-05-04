@@ -1,22 +1,25 @@
 from datetime import datetime, timezone
 import os
-from typing import Dict, List, Optional
+from typing import Optional
 from uuid import uuid4
 
 import uvicorn
 from analyzer import AnalysisProviderError, ColorAnalyzer
+from config import API_VERSION
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl, TypeAdapter
+from pydantic import HttpUrl, TypeAdapter
+from response_normalizer import normalize_analysis_response
 from rq.job import Job
 
 from jobs import get_analysis_queue, get_redis_connection, process_analysis_job
+from schemas import ColorAnalysisResponse, WebhookJobAccepted
 
 
 app = FastAPI(
     title="Fit-Kolors API",
     description="API RESTful para analise de colorimetria pessoal utilizando IA.",
-    version="1.3.0",
+    version=API_VERSION,
 )
 
 
@@ -48,57 +51,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class DetectedColors(BaseModel):
-    skin: str
-    hair: str
-    eyes: str
-    lips: str
-
-
-class AnalysisDetail(BaseModel):
-    season: str
-    undertone: str
-    contrast: str
-    metals: str
-    explanation: str
-
-
-class SeasonPalette(BaseModel):
-    theory: str
-    day: List[str]
-    night: List[str]
-
-
-class MakeupTips(BaseModel):
-    lipstick: str
-    blush: str
-    eyeshadow: str
-
-
-class ColorAnalysisResponse(BaseModel):
-    detected_colors: DetectedColors
-    analysis: AnalysisDetail
-    recommendations: Dict[str, SeasonPalette]
-    makeup_tips: MakeupTips
-
-
-class WebhookJobAccepted(BaseModel):
-    job_id: str
-    status: str
-    queue: str
-    webhook_url: str
-
-
-class WebhookEvent(BaseModel):
-    event: str
-    job_id: str
-    status: str
-    created_at: str
-    completed_at: str
-    result: Optional[ColorAnalysisResponse] = None
-    error: Optional[str] = None
 
 
 analyzer = ColorAnalyzer()
@@ -140,7 +92,7 @@ async def analyze_image(
     try:
         contents = await file.read()
         result = await analyzer.analyze_face(contents)
-        return result
+        return normalize_analysis_response(result)
     except AnalysisProviderError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
